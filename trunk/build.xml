@@ -1,0 +1,50 @@
+
+<project name="Sleepy" default="all" basedir=".">
+
+  <taskdef classname="JFlex.anttask.JFlexTask" name="jflex" />
+
+  <property name="project.src"   location="src" />
+  <property name="project.build" location="bin" />
+  <property name="project.path"  value="sleepy" />
+
+  <target name="all" depends="init, generate, compile, jar" />
+
+  <target name="init">
+    <tstamp />
+    <mkdir dir="${project.build}" />
+  </target>
+
+  <target name="generate" depends="init" description="generate SSPParser.java">
+    <jflex
+        file="res/sspparser.flex"
+        destdir="src"
+	/>
+  </target>
+
+  <target name="compile" depends="generate" description="compile the source">
+    <javac srcdir="${project.src}/"
+           destdir="${project.build}"
+           classpath="${project.build};lib/sleep.jar;lib/org.mortbay.jetty.jar;lib/javax.servlet.jar;lib/commons-logging.jar"
+           nowarn="yes"
+           depend="yes"
+           debug="no"
+           optimize="yes"
+    >
+    </javac>
+  </target>
+
+  <target name="jar" depends="compile">
+     <jar destfile="./lib/sleepy.jar"
+          basedir="bin"
+          includes="**/*.class">
+         <manifest>
+           <attribute name="Main-Class" value="sleepy.Main" />
+         </manifest>
+      </jar>
+  </target>
+
+  <target name="clean" description="clean up" >
+    <delete dir="${project.build}"/>
+  </target>
+</project>
+
