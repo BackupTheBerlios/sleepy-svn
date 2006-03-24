@@ -12,10 +12,12 @@ import java.util.*;
 import java.io.*;
 
 import org.apache.commons.logging.Log;
-// import org.mortbay.log.*;
 
 /**
- * 
+ * SSPScriptLoader
+ * -------------------------------
+ *
+ * @author Ralph Becker
  */
 public class SSPScriptLoader extends ScriptLoader // implements RuntimeWarningWatcher
 {

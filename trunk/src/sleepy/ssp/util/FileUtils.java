@@ -6,6 +6,12 @@ import java.io.*;
 import java.nio.*;
 import java.nio.charset.*;
 
+/**
+ * FileUtils
+ * -------------------------------
+ *
+ * @author Ralph Becker
+ */
 public class FileUtils
 {
 	private FileUtils() { /* no instance needed */ }

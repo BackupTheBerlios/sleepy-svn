@@ -4,6 +4,14 @@ package sleepy.ssp.util;
 import sleep.engine.types.*;	
 import sleep.runtime.*;	
 
+import java.util.*;
+
+/**
+ * ReadOnlyScalar
+ * -------------------------------
+ *
+ * @author Ralph Becker
+ */
 public class ReadOnlyScalar extends Scalar
 {
 	public ReadOnlyScalar( ScalarType value )
@@ -75,6 +83,15 @@ public class ReadOnlyScalar extends Scalar
 		else if ( value instanceof ScalarHash ) {
 			return wrapScalarHash( (ScalarHash) value );
 		}
+		else if ( value instanceof Map ) {
+			return wrapMap( (Map) value );
+		}
+		else if ( value instanceof Collection ) {
+			return wrapCollection( (Collection) value );
+		}
+		else if ( value instanceof Object[] ) {
+			return wrapObjectArray( (Object[]) value );
+		}
 		else {
 			return new ReadOnlyScalar( new ObjectValue( value ) );
 		}
@@ -129,5 +146,19 @@ public class ReadOnlyScalar extends Scalar
 	{
 		return new ReadOnlyScalar( new ObjectValue( value ) );
 	}
+	
+	public static ReadOnlyScalar wrapMap( Map value )
+	{
+		return new ReadOnlyScalar( ReadOnlyHash.wrapMap( value ) );
+	}
 
+	public static ReadOnlyScalar wrapCollection( Collection value )
+	{
+		return new ReadOnlyScalar( ReadOnlyArray.wrapCollection( value ) );
+	}
+	
+	public static ReadOnlyScalar wrapObjectArray( Object[] value )
+	{
+		return new ReadOnlyScalar( ReadOnlyArray.wrapArray( value ) );
+	}
 }

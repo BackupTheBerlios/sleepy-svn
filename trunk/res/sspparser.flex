@@ -1,7 +1,11 @@
 
-/**
-   Sleep Server Pages Parser
-*/
+/*
+ *  Sleep Server Pages Parser
+ * -------------------------------
+ *
+ * @author Ralph Becker
+ */
+
 package sleepy.ssp.core;
 
 import java.io.*;

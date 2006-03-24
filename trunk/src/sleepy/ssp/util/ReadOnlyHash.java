@@ -5,6 +5,12 @@ import sleep.runtime.*;
 import sleep.engine.types.*;
 import java.util.*;
 
+/**
+ * ReadOnlyHash
+ * -------------------------------
+ *
+ * @author Ralph Becker
+ */
 public class ReadOnlyHash extends HashBin
 {
 	public ReadOnlyHash()
@@ -54,4 +60,43 @@ public class ReadOnlyHash extends HashBin
 		return "(read-only hash " + values.toString() + ")";
 	}
 	
+	public static ReadOnlyHash wrapMap( Map map )
+	{
+		ReadOnlyHash result = new ReadOnlyHash();
+		Iterator keySet = map.keySet().iterator();
+		while ( keySet.hasNext() )
+		{
+			String key;
+			Scalar value;
+			Object next = keySet.next();
+			if ( next instanceof String ) // fine
+			{
+				key = (String) next;
+				Object obj = map.get( next );
+				if ( obj instanceof ReadOnlyScalar ) // fine
+				{
+					value = (ReadOnlyScalar) obj;
+				}
+				else
+				{
+					value = ReadOnlyScalar.wrap( obj );
+				}
+			}
+			else
+			{
+				key = next.toString();
+				Object obj = map.get( next );
+				if ( obj instanceof ReadOnlyScalar ) // fine
+				{
+					value = (ReadOnlyScalar) obj;
+				}
+				else
+				{
+					value = ReadOnlyScalar.wrap( obj );
+				}
+			}
+			result.put( key, value );
+		}
+		return result;
+	}
 }

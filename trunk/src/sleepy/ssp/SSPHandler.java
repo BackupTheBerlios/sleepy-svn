@@ -13,6 +13,12 @@ import java.io.*;
 import org.apache.commons.logging.Log;
 import org.mortbay.log.*;
 
+/**
+ * SSPHandler
+ * -------------------------------
+ *
+ * @author Ralph Becker
+ */
 public class SSPHandler implements HttpHandler
 {
 	private static Log log = LogFactory.getLog(SSPHandler.class);	
@@ -74,9 +80,6 @@ public class SSPHandler implements HttpHandler
 				
 				response.setContentType("text/html");
 				response.setStatus(response.__200_OK );
-
-				//sspScript.setOutputStream( response.getOutputStream() );
-				//sspScript.run();
 				
 				sspScript.service( new SSPJettyConnector( request, response ) );
 				

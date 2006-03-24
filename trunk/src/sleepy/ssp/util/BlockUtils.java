@@ -10,6 +10,12 @@ import sleep.engine.*;
 
 import java.io.*;
 
+/**
+ * BlockUtils
+ * -------------------------------
+ *
+ * @author Ralph Becker
+ */
 public class BlockUtils
 {
 	private BlockUtils() { /* no instance needed */ }

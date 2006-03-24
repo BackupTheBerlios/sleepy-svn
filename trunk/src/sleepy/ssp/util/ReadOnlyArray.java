@@ -5,6 +5,12 @@ import sleep.engine.types.*;
 import sleep.runtime.*;
 import java.util.*;
 
+/**
+ * ReadOnlyArray
+ * -------------------------------
+ *
+ * @author Ralph Becker
+ */
 public class ReadOnlyArray extends ArrayContainer // implements ScalarArray
 {
 	protected boolean allowSort = false;
@@ -127,18 +133,32 @@ public class ReadOnlyArray extends ArrayContainer // implements ScalarArray
 		}
 	}
 	
-	protected Stack createValues( Collection initialValues )
+	public static ReadOnlyArray wrapCollection( Collection collection )
 	{
-		Stack values = new Stack();
-		Iterator iter = initialValues.iterator();
+		ReadOnlyArray result = new ReadOnlyArray();
+		Iterator iter = collection.iterator();
 		while( iter.hasNext() )
 		{
 			Object next = iter.next();
-			if ( next instanceof Scalar )
-				values.add( ReadOnlyScalar.wrapScalar((Scalar) next) );
+			if ( next instanceof ReadOnlyScalar )
+				result.add( (ReadOnlyScalar) next );
 			else 
-				values.add( ReadOnlyScalar.wrapObject(next) );
+				result.add( ReadOnlyScalar.wrap(next) );
 		}
-		return values;
+		return result;
 	}
+	
+	public static ReadOnlyArray wrapArray( Object[] objects )
+	{
+		ReadOnlyArray result = new ReadOnlyArray();
+		for( int i=0; i<objects.length; i++ )
+		{
+			if ( objects[i] instanceof ReadOnlyScalar )
+				result.add( (ReadOnlyScalar) objects[i] );
+			else 
+				result.add( ReadOnlyScalar.wrap(objects[i]) );
+		}
+		return result;
+	}
+
 }

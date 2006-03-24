@@ -13,6 +13,12 @@ import java.util.*;
 import sleep.error.*;
 import sleep.engine.*;
 
+/**
+ * SSPBridge
+ * -------------------------------
+ *
+ * @author Ralph Becker
+ */
 public class SSPBridge implements Loadable, Function
 {
 	private static HashMap bridges = new HashMap();
@@ -81,7 +87,7 @@ public class SSPBridge implements Loadable, Function
 				String enc = BridgeUtilities.getString( args, "" );
 				if ( !message.equals("") )
 				{
-					message = message + "\n";
+					message = message + "\r\n";
 					if ( Boolean.getBoolean("dump.code") )
 						System.out.print(message);
 					

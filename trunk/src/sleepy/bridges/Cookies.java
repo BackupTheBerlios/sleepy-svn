@@ -1,3 +1,6 @@
+
+package sleepy.bridges;
+
 import sleep.bridges.*;
 import sleep.interfaces.*;
 import sleep.runtime.*;

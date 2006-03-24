@@ -10,6 +10,12 @@ import sleep.error.*;
 import java.io.*;
 import java.util.*;
 
+/**
+ * 
+ * -------------------------------
+ *
+ * @author Ralph Becker
+ */
 public class SSPErrorScript extends SSPScript
 {
 	public SSPErrorScript( YourCodeSucksException ycse, File scriptfile, Hashtable env )

@@ -12,9 +12,11 @@ import org.mortbay.log.*;
 import org.apache.commons.logging.Log;
 
 /**
- * SSPHttpContext.
+ * SSPHttpContext
+ * -------------------------------
+ *
+ * @author Ralph Becker
  */
- 
 public class SSPHttpContext extends HttpContext implements SSPContext
 {
 	private static Log log = LogFactory.getLog(SSPHttpContext.class);

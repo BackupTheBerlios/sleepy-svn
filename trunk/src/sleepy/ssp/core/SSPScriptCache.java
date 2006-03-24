@@ -10,6 +10,12 @@ import sleep.runtime.*;
 import sleep.engine.*;
 import sleep.error.*;
 
+/**
+ * SSPScriptCache
+ * -------------------------------
+ *
+ * @author Ralph Becker
+ */
 public class SSPScriptCache
 {
 	
@@ -70,6 +76,7 @@ public class SSPScriptCache
 		
 		result = new SSPScript( block, scriptLoader.copySharedEnv() );
 		result.setName( sppScriptFile.toString() );
+		result.setScriptFile( sppScriptFile );
 		
 		return result;
 	}

@@ -10,11 +10,16 @@ import sleep.error.*;
 import java.io.*;
 import java.util.*;
 
-//import org.mortbay.http.*;
-
+/**
+ * SSPScript
+ * -------------------------------
+ *
+ * @author Ralph Becker
+ */
 public class SSPScript extends ScriptInstance implements RuntimeWarningWatcher
 {
 	private OutputStream out;
+	private File scriptFile;
 
 	SSPScript( Hashtable env )
 	{
@@ -38,6 +43,16 @@ public class SSPScript extends ScriptInstance implements RuntimeWarningWatcher
 		return out;
 	}
 	
+	void setScriptFile( File scriptfile )
+	{
+		scriptFile = scriptfile;
+	}
+	
+	File getScriptFile()
+	{
+		return scriptFile;
+	}
+
 	public void processScriptWarning(ScriptWarning warning)	
 	{
 	   String message = warning.getMessage();	  
@@ -48,18 +63,14 @@ public class SSPScript extends ScriptInstance implements RuntimeWarningWatcher
 	   callFunction("&output", args );
 	}
 
-//	public void service( HttpRequest request, HttpResponse response )
 	public void service( SSPConnector sspConnector )
 	{
-//		out = response.getOutputStream();
-//		variables.putScalar("%HEADERS", ReadOnlyScalar.wrap( SSPUtils.getHeadersFromHttpRequest(request) ) );
-
-		out = sspConnector.getOutputStream();
-		variables.putScalar("%HEADERS", sspConnector.getHeaders() );
+		setOutputStream( sspConnector.getOutputStream() );
+		
+		SSPConnectorBridge.newInstance( sspConnector ).scriptLoaded( this );
 		
 		super.run();
 		
-		out = null;
 	}
 
 	public void destroy()
@@ -71,6 +82,7 @@ public class SSPScript extends ScriptInstance implements RuntimeWarningWatcher
 		environment = null;
 		variables = null;
 		script = null;
+		scriptFile = null;
 	}
 
 }

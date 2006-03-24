@@ -5,6 +5,12 @@ import sleep.runtime.*;
 import sleep.engine.types.*;
 import java.util.*;
 
+/**
+ * HashBin
+ * -------------------------------
+ *
+ * @author Ralph Becker
+ */
 public class HashBin extends HashContainer
 {
 	public HashBin()
