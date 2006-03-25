@@ -4,8 +4,8 @@ package sleepy.bridges;
 import sleep.bridges.*;
 import sleep.interfaces.*;
 import sleep.runtime.*;
-import javax.servlet.*;
-import javax.servlet.http.*;
+import org.mortbay.http.HttpRequest;
+import org.mortbay.http.HttpResponse;
 import java.util.*;
 
 /**
@@ -18,10 +18,22 @@ import java.util.*;
  * @since 1.0
  */
 public class Cookies implements Loadable {
+    private HttpRequest request;
+    private HttpResponse response;
+    
+    public Cookies(HttpRequest request, HttpResponse response) {
+        
+        this.request = request;
+        this.response = response;
+    }
 
     public boolean scriptLoaded(ScriptInstance s) {
+        
+        // TODO: Possibly add a check here to see that
+        // this.setup() has been called.
         return true;
     }
+    
     public boolean scriptUnloaded(ScriptInstance s) {
         return true;
     }

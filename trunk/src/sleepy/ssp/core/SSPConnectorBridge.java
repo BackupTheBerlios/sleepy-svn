@@ -80,6 +80,12 @@ public class SSPConnectorBridge implements Loadable
 
 	public boolean scriptUnloaded( ScriptInstance script )
 	{
+        if ( !(script instanceof SSPScript) )
+            throw new IllegalArgumentException("SSPConnectorBridge.scriptUnloaded: not a SSPScript"); // Not likely, but anyway..
+
+        SSPScript sspScript = (SSPScript) script;
+
+        sspConnector.tearDown( sspScript );
 		return true;
 	}
 

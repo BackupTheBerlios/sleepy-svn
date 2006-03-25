@@ -4,6 +4,8 @@ package sleepy.ssp;
 import sleepy.ssp.core.*;
 import sleepy.ssp.util.*;
 
+import sleepy.bridges.*;
+
 import sleep.runtime.*;
 
 import java.io.*;
@@ -120,10 +122,22 @@ public class SSPJettyConnector implements SSPConnector
 	 * Called in SSPConnectorBridge.scriptLoaded 
 	 * after setting up the default environment
 	 */
-	public void setup( SSPScript sspscript )
-	{
-		// add additional setup tasks here
-		
-	}
+    public void setup( SSPScript sspscript )
+    {
+        // add additional setup tasks here
+        Cookies cookies = new Cookies(this.request, this.response);
+        Sessions sessions = new Sessions(this.request, this.response);
+        
+        // Fire the events - I feel this should be done more properly though
+        cookies.scriptLoaded(sspscript);
+        sessions.scriptLoaded(sspscript);
+    }
 
+    /** 
+    * Called in SSPConnectorBridge.scriptUnloaded 
+    */
+    public void tearDown( SSPScript sspscript )
+    {
+        // Tear down stuff here
+    }
 }

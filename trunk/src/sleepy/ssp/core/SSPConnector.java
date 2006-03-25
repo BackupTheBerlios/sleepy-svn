@@ -12,10 +12,15 @@ import java.util.*;
  */
 public interface SSPConnector
 {
-	/** 
-	 * Called in SSPConnectorBridge.scriptLoaded
-	 */
-	public void setup( SSPScript sspscript );
+    /** 
+    * Called in SSPConnectorBridge.scriptLoaded
+    */
+    public void setup( SSPScript sspscript );
+
+    /** 
+    * Called in SSPConnectorBridge.scriptUnloaded
+    */
+    public void tearDown( SSPScript sspscript );
 	
 	//----- request stuff ----- 
 	

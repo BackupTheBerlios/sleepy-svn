@@ -4,8 +4,8 @@ package sleepy.bridges;
 import sleep.bridges.*;
 import sleep.interfaces.*;
 import sleep.runtime.*;
-import javax.servlet.*;
-import javax.servlet.http.*;
+import org.mortbay.http.HttpRequest;
+import org.mortbay.http.HttpResponse;
 import java.util.*;
 
 /**
@@ -19,10 +19,20 @@ import java.util.*;
  * @since 1.0
  */
 public class Sessions implements Loadable {
+    
+    private HttpRequest request;
+    private HttpResponse response;
+    
+    public Sessions(HttpRequest request, HttpResponse response) {
+
+        this.request = request;
+        this.response = response;
+    }
 
     public boolean scriptLoaded(ScriptInstance s) {
         return true;
     }
+    
     public boolean scriptUnloaded(ScriptInstance s) {
         return true;
     }
