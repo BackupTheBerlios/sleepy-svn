@@ -18,34 +18,46 @@ import sleep.error.*;
  */
 public class SSPScriptCache
 {
-	
 	private boolean storeBytes = false;
 	private HashMap blockCache;
 	private HashMap lastModifiedCache;
 	
+	private boolean initialized = false;
 	private SSPScriptLoader scriptLoader;
+
+	public SSPScriptCache() {}
 	
-	public SSPScriptCache( SSPScriptLoader loader )
-	{
-		blockCache = new HashMap();
-		lastModifiedCache = new HashMap();
-		scriptLoader = loader;
-	}
 	/**
 	 * Creates a cache for storing Blocks.
 	 * if store_bytes is set to true a serialized 
 	 * Block is stored as a byte array and a fresh
 	 * copy is returned. Default is store blocks.
 	 */
-	public SSPScriptCache(  SSPScriptLoader loader, boolean store_bytes )
+	public SSPScriptCache(  boolean store_bytes )
 	{
-		blockCache = new HashMap();
-		lastModifiedCache = new HashMap();
-		scriptLoader = loader;
 		storeBytes = store_bytes;
 	}
+
+	public void init( SSPScriptLoader loader )
+	{
+		if ( !initialized )
+		{
+			initialized = true;
+			blockCache = new HashMap();
+			lastModifiedCache = new HashMap();
+			scriptLoader = loader;
+		}
+	}
 	
-	public synchronized SSPScript getScriptFor( File sppScriptFile ) throws IOException
+	public synchronized SSPScript getScriptFor( File root, String pathInContext ) throws IOException
+	{
+		 SSPScript sspScript = getScriptFor( new File( root, pathInContext.substring(1) ) );
+		 sspScript.setRootDir( root );
+		 sspScript.setName( pathInContext );
+		 return sspScript;
+	}
+	
+	protected SSPScript getScriptFor( File sppScriptFile ) throws IOException
 	{
 		SSPScript result = null;
 		Block block = null;
@@ -55,7 +67,9 @@ public class SSPScriptCache
 			Object refreshed = refresh( sppScriptFile );
 			if ( refreshed instanceof YourCodeSucksException ) 
 			{
-				return new SSPErrorScript( (YourCodeSucksException) refreshed, sppScriptFile, scriptLoader.copySharedEnv() );
+				result = new SSPErrorScript( (YourCodeSucksException) refreshed, scriptLoader.copySharedEnv() );
+				result.setScriptFile( sppScriptFile );
+				return result;
 			}
 			else
 			{
@@ -66,7 +80,9 @@ public class SSPScriptCache
 		{
 			if ( refresh == 0L )
 			{ // file not found or io error
-				return new SSPErrorScript( "File not found: ", sppScriptFile, scriptLoader.copySharedEnv() );
+				result = new SSPErrorScript( "File not found: ", scriptLoader.copySharedEnv() );
+				result.setScriptFile( sppScriptFile );
+				return result;
 			}
 			else 
 			{
@@ -75,24 +91,61 @@ public class SSPScriptCache
 		}
 		
 		result = new SSPScript( block, scriptLoader.copySharedEnv() );
-		result.setName( sppScriptFile.toString() );
 		result.setScriptFile( sppScriptFile );
 		
 		return result;
 	}
+
+	public synchronized Block getBlockFor( File parent, String filename ) throws IOException
+	{
+		Block block = null;
+		File includeFile = new File( parent, filename );
+		long refresh = needsRefresh( includeFile );
+		if ( refresh > 0L )
+		{
+			Object refreshed = refresh( includeFile );
+			if ( refreshed instanceof YourCodeSucksException ) 
+			{
+				return BlockUtils.errorsToBlock( (YourCodeSucksException) refreshed );
+			}
+			else
+			{
+				block = (Block) refreshed;
+			}
+		}
+		else 
+		{
+			if ( refresh == 0L )
+			{ // file not found or io error
+				return block;
+			}
+			else 
+			{
+				block = getBlock( includeFile );
+			}
+		}
+		return block;
+	}	
 	
 	/**
 	 * refreshs block if sppScriptFile has been changed 
 	 */
-	protected Object refresh( File sppScriptFile ) throws IOException
+	protected Object refresh( File sspScriptFile ) throws IOException
 	{
-		String code = FileUtils.readFile( sppScriptFile );
-	//System.out.println( "file: " + code );
-		code = SSPParser.getCode( code + "\n\n" );
-	//System.out.println( "code: " + code );
+		String code = FileUtils.readFile( sspScriptFile );
+		
+if ( Boolean.getBoolean("dump.code") )
+	System.out.println( "file: " + code );
+
+		if ( FileUtils.hasExtension(sspScriptFile, ".ssp" ) )
+			code = SSPParser.getCode( code + "\n\n" );
+			
+if ( Boolean.getBoolean("dump.code") )
+	System.out.println( "code: " + code );
+
 		Object result = BlockUtils.compile( code );
 		if ( result instanceof Block )
-			putBlock( sppScriptFile, (Block) result );
+			putBlock( sspScriptFile, (Block) result );
 		return result;
 	}
 	

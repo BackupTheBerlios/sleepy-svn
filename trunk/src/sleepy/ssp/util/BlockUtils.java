@@ -9,6 +9,7 @@ import sleep.bridges.*;
 import sleep.engine.*;
 
 import java.io.*;
+import java.util.*;
 
 /**
  * BlockUtils
@@ -94,5 +95,20 @@ public class BlockUtils
 		return result;
 	}
 
+	public static Block errorsToBlock( YourCodeSucksException ycse )
+	{
+		Iterator i = ycse.getErrors().iterator();
+		StringBuffer buffer = new StringBuffer("");
+		buffer.append("writeln('YourCodeSucksException for: ' . $pathInContext);\n");
+		while (i.hasNext())
+		{
+			SyntaxError error = (SyntaxError)i.next();
+			buffer.append("writeln(' line ").append(error.getLineNumber()).append(": ").append( error.getDescription()).append(" ');\n");
+		}
+		Object result = compile( buffer.toString() );
+		if ( result instanceof Block )
+			return (Block) result;
+		return (Block) null;
+	}
 
 }

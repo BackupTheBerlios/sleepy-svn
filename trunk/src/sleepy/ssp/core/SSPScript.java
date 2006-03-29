@@ -18,8 +18,12 @@ import java.util.*;
  */
 public class SSPScript extends ScriptInstance implements RuntimeWarningWatcher
 {
-	private OutputStream out;
+	private ByteArrayOutputStream out;
 	private File scriptFile;
+
+	private SSPConnector sspConnector;
+	private String encoding;
+	private File rootDir;
 
 	SSPScript( Hashtable env )
 	{
@@ -33,14 +37,23 @@ public class SSPScript extends ScriptInstance implements RuntimeWarningWatcher
 		addWarningWatcher( this );
 	}
 
-	void setOutputStream( OutputStream out_stream )
-	{
-		out = out_stream;
-	}
-
 	OutputStream getOutputStream()
 	{
+		if ( out == null )
+			out = new ByteArrayOutputStream();
 		return out;
+	}
+
+	void setEncoding( String enc )
+	{
+		encoding = enc;
+	}
+
+	String getEncoding()
+	{
+		if ( encoding == null )
+			return "ISO-8859-1"; // default encoding
+		return encoding;
 	}
 	
 	void setScriptFile( File scriptfile )
@@ -53,6 +66,16 @@ public class SSPScript extends ScriptInstance implements RuntimeWarningWatcher
 		return scriptFile;
 	}
 
+	void setRootDir( File rootdir )
+	{
+		rootDir = rootdir;
+	}
+
+	File getRootDir()
+	{
+		return new File( rootDir.toString() );
+	}
+
 	public void processScriptWarning(ScriptWarning warning)	
 	{
 	   String message = warning.getMessage();	  
@@ -60,17 +83,30 @@ public class SSPScript extends ScriptInstance implements RuntimeWarningWatcher
 	   String script  = warning.getNameShort(); // name of script 
 	   Stack args = new Stack();
 	   args.push( SleepUtils.getScalar("ScriptWarning: " + script + "(line " + lineNo + "): " + message + "\n") );
-	   callFunction("&output", args );
+	   callFunction("&writeln", args );
 	}
 
-	public void service( SSPConnector sspConnector )
+	public SSPConnector getSSPConnector()
 	{
-		setOutputStream( sspConnector.getOutputStream() );
+		return sspConnector;
+	}
+
+	public void service( SSPConnector sspConnector ) throws IOException
+	{
+		this.sspConnector = sspConnector;
+		SSPConnectorBridge bridge = SSPConnectorBridge.newInstance( sspConnector );
+		bridge.scriptLoaded( this );
 		
-		SSPConnectorBridge.newInstance( sspConnector ).scriptLoaded( this );
+		sspConnector.setup( this );
 		
 		super.run();
+
+		sspConnector.tearDown( this );
 		
+		sspConnector.setContentLength( out.size() );
+		out.writeTo( sspConnector.getOutputStream() );
+		
+		bridge.destroy();
 	}
 
 	public void destroy()
@@ -83,6 +119,9 @@ public class SSPScript extends ScriptInstance implements RuntimeWarningWatcher
 		variables = null;
 		script = null;
 		scriptFile = null;
+		rootDir = null;
+		sspConnector = null;
+		encoding = null;
 	}
 
 }

@@ -23,8 +23,7 @@ public class SSPHandler implements HttpHandler
 {
 	private static Log log = LogFactory.getLog(SSPHandler.class);	
 	
-	private SSPScriptLoader scriptLoader = null;
-	private SSPScriptCache scriptCache = null;
+	private SSPScriptProvider scriptProvider = null;
 	
 	private File rootDir = null;
 	
@@ -76,12 +75,13 @@ public class SSPHandler implements HttpHandler
 			SSPScript sspScript = null;
 			try
 			{	
-				sspScript = scriptCache.getScriptFor( getScriptFile( pathInContext ) );
+				sspScript = scriptProvider.getScriptFor( rootDir, pathInContext );
+				sspScript.setName( pathInContext );
 				
 				response.setContentType("text/html");
 				response.setStatus(response.__200_OK );
 				
-				sspScript.service( new SSPJettyConnector( request, response ) );
+				sspScript.service( new SSPJettyConnector( request, response, scriptProvider ) );
 				
 				request.setHandled(true);
 			}
@@ -89,7 +89,7 @@ public class SSPHandler implements HttpHandler
 			{
 				//e.printStackTrace();
 				log.error( e.toString() );
-				throw new RuntimeException( e.toString() );
+				throw new RuntimeException( e );
 			}
 			finally
 			{
@@ -113,6 +113,11 @@ public class SSPHandler implements HttpHandler
 		}
 	}
 	
+	protected File getRootDir()
+	{
+		return new File( rootDir.toString() );
+	}
+	
 	protected File getScriptFile( String pathInContext )
 	{
 		return new File( rootDir, pathInContext.substring(1) );
@@ -121,27 +126,18 @@ public class SSPHandler implements HttpHandler
 	public void initialize(HttpContext context) {
 		
 		this.context = context;
-		
-		Object loader = context.getAttribute(SSPContext.SSP_SCRIPTLOADER);
-		if ( loader != null )
+
+		Object provider = context.getAttribute(SSPContext.SSP_SCRIPTPROVIDER);
+		if ( provider != null )
 		{
-			scriptLoader = (SSPScriptLoader) loader;
+			scriptProvider = (SSPScriptProvider) provider;
 		}
 		else 
 		{
-			scriptLoader = new SSPScriptLoader();
-			context.setAttribute(SSPContext.SSP_SCRIPTLOADER, scriptLoader);
+			scriptProvider = new SSPScriptProvider();
+			context.setAttribute(SSPContext.SSP_SCRIPTPROVIDER, scriptProvider);
 		}
-		Object cache = context.getAttribute(SSPContext.SSP_SCRIPTCACHE);
-		if ( cache != null )
-		{
-			scriptCache = (SSPScriptCache) cache;
-		}
-		else 
-		{
-			scriptCache = new SSPScriptCache(scriptLoader);
-			context.setAttribute(SSPContext.SSP_SCRIPTCACHE, scriptCache);
-		}
+
 		if ( context.getResourceBase() != null )
 			setRootDir(context.getResourceBase());
 		

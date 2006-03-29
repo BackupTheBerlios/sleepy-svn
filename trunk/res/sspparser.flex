@@ -127,7 +127,7 @@ NEWLINE=\r|\n|\r\n
   	  }
   	  else if ( buffer.length() > 0 )
   	  {
-  	    code.append( "output('" );
+  	    code.append( "writeln('" );
   	    code.append( buffer.toString() );
   	    buffer.delete(0,buffer.length());
 		code.append( "');" ).append( "\n" );

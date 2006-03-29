@@ -106,4 +106,33 @@ public class FileUtils
 			finally { in.position(mark); }
 		}
 	 }
+	 
+	 public static String getExtension( File file )
+	 {
+	 	 return getExtension( file.toString() );
+	 }
+	 
+	 public static String getExtension( String filename )
+	 {
+	 	 int index = filename.lastIndexOf(".");
+	 	 if ( index > 0 ) 
+	 	 	 return filename.substring( index );
+	 	 return "";
+	 }
+	 
+	 public static boolean hasExtension( File file, String extension )
+	 {
+	 	 return hasExtension( file.toString(), extension );
+	 }
+	 
+	 public static boolean hasExtension( String filename, String extension )
+	 {
+	 	 String name = filename.toLowerCase();
+	 	 String ext = extension.toLowerCase();
+	 	 int index = name.lastIndexOf( ext );
+	 	 if ( index == name.length() - extension.length() )
+	 	 	return true;
+	 	 return false;
+	 }
+	 
 }

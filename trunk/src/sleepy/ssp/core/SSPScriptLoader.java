@@ -1,7 +1,9 @@
 
 package sleepy.ssp.core;
 
-import sleep.runtime.*	;
+import sleepy.ssp.util.*;
+
+import sleep.runtime.*;
 import sleep.interfaces.*;
 import sleep.error.*;
 import sleep.parser.*;
@@ -11,7 +13,6 @@ import sleep.engine.*;
 import java.util.*;
 import java.io.*;
 
-import org.apache.commons.logging.Log;
 
 /**
  * SSPScriptLoader
@@ -21,30 +22,96 @@ import org.apache.commons.logging.Log;
  */
 public class SSPScriptLoader extends ScriptLoader // implements RuntimeWarningWatcher
 {
-	private static Log log; // = org.mortbay.log.LogFactory.getLog(SSPScriptLoader.class);
-	
-	static {
-		try {
-			Class lfc = Class.forName( System.getProperty("sleepy.ssp.logfactory", "org.mortbay.log.LogFactory") );
-			if ( lfc != null ) {
-				java.lang.reflect.Method glm = lfc.getDeclaredMethod( "getLog", new Class[] { Class.class } );
-				if ( glm != null )
-					log = (Log) glm.invoke( null, new Object[] { SSPScriptLoader.class } );
-			}
-		}
-		catch ( Exception e ) { System.err.println(e.toString()); }
-	}
+	//private Logger log = new DefaultLogger("sleepy.ssp.core.SSPScriptLoader");
+	private Logger log;
 	
 	private Hashtable sharedEnv;
-
+	private SSPScriptCache scriptCache;
+	private boolean initialized = false;
+		
 	private final String default_script = "\nprintln('SSPScriptLoader running');\n";
+
+	private ProtectedEnvironment sspEnv;
 
 	public SSPScriptLoader()
 	{
 		super();
-		sharedEnv = new Hashtable();
-		addGlobalBridge( new SSPBridge(this) );
-		runDefaultScript();
+	}
+	
+	public void init( SSPScriptCache cache )
+	{
+		if ( !initialized )
+		{
+			initialized = true;
+			scriptCache = cache;
+			sharedEnv = new Hashtable();
+			sspEnv = new ProtectedEnvironment();
+			setEnvironment( sspEnv );
+			addGlobalBridge( new SSPBridge( this, scriptCache ) );
+			runDefaultScript();
+			sspEnv.protectFunctions( sharedEnv.keySet() ); // protect all sleep built-in functions, functions from SSPBridge included
+			sspEnv.protectFunctions( SSPConnectorBridge.PROTECTED_FUNCTIONS ); // protect connector bridge functions
+		}
+	}
+	
+	public void addBridge( Loadable bridge )
+	{
+		addGlobalBridge( bridge );
+		Hashtable newEnv = new Hashtable();
+		try
+		{
+			loadScript("empty_script", "", newEnv ).run();
+		}
+		catch ( YourCodeSucksException ycse )
+		{
+			processScriptErrors( "addBridge("+bridge.toString()+"): ", ycse );
+			return;
+		}
+		sharedEnv = newEnv;
+	}
+	
+	public void addBridges( Loadable[] bridges )
+	{
+		for ( int i=0; i< bridges.length; i++ )
+			addGlobalBridge( bridges[i] );
+		Hashtable newEnv = new Hashtable();
+		try
+		{
+			loadScript("empty_script", "", newEnv ).run();
+		}
+		catch ( YourCodeSucksException ycse )
+		{
+			processScriptErrors( "addBridges("+bridges.toString()+"): ", ycse );
+			return;
+		}
+		sharedEnv = newEnv;
+	}
+
+	public void protectFunction( String function_name )
+	{
+		sspEnv.protectFunction( function_name );
+	}
+	
+	public void protectFunctions( Set function_names )
+	{
+		sspEnv.protectFunctions( function_names );
+	}
+	
+	private void setEnvironment( ProtectedEnvironment sspEnv )
+	{
+		DefaultEnvironment defaultEnv = null;
+		Iterator i = bridgesg.iterator();
+		while ( i.hasNext() )
+		{
+			Object n = i.next();
+			if ( n instanceof DefaultEnvironment )
+				defaultEnv = (DefaultEnvironment) n;
+		}
+		if ( defaultEnv != null )
+		{  // i'm sure it's there
+			int index = bridgesg.indexOf( defaultEnv );
+			bridgesg.set( index, sspEnv );
+		}
 	}
 	
 	private void runDefaultScript()
@@ -56,7 +123,7 @@ public class SSPScriptLoader extends ScriptLoader // implements RuntimeWarningWa
 		}
 		catch ( YourCodeSucksException ycse )
 		{
-			processScriptErrors( "SSPScriptLoader.runDefaultScript("+default_script+"): ", ycse );
+			processScriptErrors( "runDefaultScript("+default_script+"): ", ycse );
 			return;
 		}
 	}
@@ -71,7 +138,7 @@ public class SSPScriptLoader extends ScriptLoader // implements RuntimeWarningWa
 			new RuntimeWarningWatcher() {
 				public void processScriptWarning(ScriptWarning warning)
 				{
-					log.error("Warning: " + warning.getMessage() + " at line " + warning.getLineNumber());
+					log.warn("Warning: " + warning.getMessage() + " at line " + warning.getLineNumber());
 				}
 			});
 			script.run();
@@ -79,17 +146,17 @@ public class SSPScriptLoader extends ScriptLoader // implements RuntimeWarningWa
 		}
 		catch ( YourCodeSucksException ycse )
 		{
-			processScriptErrors( "SSPScriptLoader.loadEnvironmentScript("+fileName+"): ", ycse );
+			processScriptErrors( "loadEnvironmentScript("+fileName+"): ", ycse );
 			return;
 		}
 		catch ( IOException ioe )
 		{
-			log.warn( "SSPScriptLoader.loadEnvironmentScript("+fileName+"): " + ioe.toString() );
+			log.warn( "loadEnvironmentScript("+fileName+"): " + ioe.toString() );
 			throw ioe;
 		}
 		catch ( Exception e )
 		{
-			log.error( "SSPScriptLoader.loadEnvironmentScript("+fileName+"): " + e.toString() );
+			log.error( "loadEnvironmentScript("+fileName+"): " + e.toString() );
 			throw new RuntimeException( e.toString() );
 		}
 	}
@@ -118,8 +185,15 @@ public class SSPScriptLoader extends ScriptLoader // implements RuntimeWarningWa
 		}
 	}
 	
-//	public void processScriptWarning(ScriptWarning warning)
+//	public static void setLogger( Object logger )
 //	{
-//		log.error("Warning: " + warning.getMessage() + " at line " + warning.getLineNumber());
+//		log.setLogger( logger );
 //	}
+
+	public void setLogger( Logger logger )
+	{
+		log = logger;
+		log.info( logger.toString() );
+	}
+	
 }

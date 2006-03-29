@@ -22,8 +22,7 @@ public class SSPHttpContext extends HttpContext implements SSPContext
 	private static Log log = LogFactory.getLog(SSPHttpContext.class);
 	
 	private LinkedHashSet envScripts = null;
-	private SSPScriptLoader scriptLoader = null;
-	private SSPScriptCache scriptCache = null;
+	private SSPScriptProvider scriptProvider = null;
 	
     private SSPHandler sspHandler = null;
 
@@ -47,8 +46,8 @@ public class SSPHttpContext extends HttpContext implements SSPContext
 			{
   				try
 				{
-					if ( scriptLoader == null ) initSSPContext();
-					scriptLoader.loadEnvironmentScript( scriptfile );
+					if ( scriptProvider == null ) initSSPContext();
+					scriptProvider.getScriptLoader().loadEnvironmentScript( scriptfile );
 				}
 				catch ( IOException ioe )
 				{ // logged in scriptLoader
@@ -69,25 +68,16 @@ public class SSPHttpContext extends HttpContext implements SSPContext
 
 	protected void initSSPContext()
 	{
-		Object loader = getAttribute(SSPContext.SSP_SCRIPTLOADER);
-		if ( loader != null )
+		Object provider = getAttribute(SSPContext.SSP_SCRIPTPROVIDER);
+		if ( provider != null )
 		{
-			scriptLoader = (SSPScriptLoader) loader;
+			scriptProvider = (SSPScriptProvider) provider;
 		}
 		else 
 		{
-			scriptLoader = new SSPScriptLoader();
-			setAttribute(SSPContext.SSP_SCRIPTLOADER, scriptLoader);
-		}
-		Object cache = getAttribute(SSPContext.SSP_SCRIPTCACHE);
-		if ( cache != null )
-		{
-			scriptCache = (SSPScriptCache) cache;
-		}
-		else 
-		{
-			scriptCache = new SSPScriptCache(scriptLoader);
-			setAttribute(SSPContext.SSP_SCRIPTCACHE, scriptCache);
+			scriptProvider = new SSPScriptProvider();
+			scriptProvider.getScriptLoader().setLogger( SSPUtils.getLogger( scriptProvider.getScriptLoader().getClass() ) );
+			setAttribute(SSPContext.SSP_SCRIPTPROVIDER, scriptProvider);
 		}
 	}
 

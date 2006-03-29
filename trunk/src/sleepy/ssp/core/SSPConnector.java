@@ -45,6 +45,24 @@ public interface SSPConnector
 	/** The request character encoding, if any */
 	public String getCharacterEncoding();
 
+	/** The remote address */
+	public String getRemoteAddress();
+
+	/** The remote host, if we know */
+	public String getRemoteHost();
+
+	/** The remote port */
+	public int getRemotePort();
+
+	/** The server address */
+	public String getServerAddress();
+
+	/** The server name */
+	public String getServerName();
+
+	/** The server port */
+	public int getServerPort();
+
 	/** The request header data
 	 * A SSPConnector is responsible to provide them.
 	 * Format: String key -> String[] values
@@ -68,11 +86,11 @@ public interface SSPConnector
 
 	/** The content type of the response, default is text/html */
 	public void setContentType( String ctype );
-	
+
 	/** The content length of the response */
 	public void setContentLength( int len );
 
-	/** The character encoding of the response */
+	/** Set the character encoding of the response */
 	public void setCharacterEncoding( String encoding );
 
 	/** Add a response header field */

@@ -1,6 +1,11 @@
 
 package sleepy.bridges;
 
+import sleepy.ssp.core.SSPLoadable;
+import sleepy.ssp.core.SSPScript;
+import sleepy.ssp.core.SSPConnector;
+import sleepy.ssp.SSPJettyConnector;
+
 import sleep.bridges.*;
 import sleep.interfaces.*;
 import sleep.runtime.*;
@@ -17,20 +22,34 @@ import java.util.*;
  * @author Andreas Ravnestad
  * @since 1.0
  */
-public class Cookies implements Loadable {
-    private HttpRequest request;
-    private HttpResponse response;
+public class Cookies implements SSPLoadable /*, Protectable*/ {
     
-    public Cookies(HttpRequest request, HttpResponse response) {
+    static HashSet PROTECTED_FUNCTIONS = new HashSet();
+    static {
+    	PROTECTED_FUNCTIONS.add("&getCookie");
+    	PROTECTED_FUNCTIONS.add("&setCookie");
+    	PROTECTED_FUNCTIONS.add("&delCookie");
+    }
+    
+    /* if implements Protectable
+	public Set protectedFunctionNames()
+	{
+		return PROTECTED_FUNCTIONS;
+	}
+    */
+    
+    public Cookies() {
         
-        this.request = request;
-        this.response = response;
     }
 
     public boolean scriptLoaded(ScriptInstance s) {
         
-        // TODO: Possibly add a check here to see that
-        // this.setup() has been called.
+        Hashtable env = s.getScriptEnvironment().getEnvironment();
+
+        env.put("&getCookie", new getCookie() );
+        env.put("&setCookie", new setCookie() );
+        env.put("&delCookie", new delCookie() );
+
         return true;
     }
     
@@ -42,7 +61,7 @@ public class Cookies implements Loadable {
     // Returns a cookie value
     private static class getCookie implements Function {
         public Scalar evaluate(String name, ScriptInstance script, Stack args) {
-            return null;
+            return SleepUtils.getEmptyScalar();
         }
     }
     
@@ -50,7 +69,7 @@ public class Cookies implements Loadable {
     // Sets a cookie
     private static class setCookie implements Function {
         public Scalar evaluate(String name, ScriptInstance script, Stack args) {
-            return null;
+            return SleepUtils.getEmptyScalar();
         }
     }
     
@@ -58,7 +77,30 @@ public class Cookies implements Loadable {
     // Deletes a cookie entirely
     private static class delCookie implements Function {
         public Scalar evaluate(String name, ScriptInstance script, Stack args) {
-            return null;
+            return SleepUtils.getEmptyScalar();
         }
     }
+    
+    public boolean setup( SSPScript sspScript, SSPConnector sspConnector )
+    {
+    	// SSPJettyConnector jettyConnector = (SSPJettyConnector) sspConnector;
+    	// HttpRequest httpRequest = jettyConnector.getHttpRequest();
+    	// HttpResponse httpResponse = jettyConnector.getHttpResponse();
+    	// ...
+    	
+    	System.out.println( "Cookies.setup(" + sspScript.toString() + ", " + sspConnector.toString() +  " ): " + sspScript.getName() );
+    	return true;
+    }
+
+    public boolean tearDown( SSPScript sspScript, SSPConnector sspConnector )
+    {
+    	// SSPJettyConnector jettyConnector = (SSPJettyConnector) sspConnector;
+    	// HttpRequest httpRequest = jettyConnector.getHttpRequest();
+    	// HttpResponse httpResponse = jettyConnector.getHttpResponse();
+    	// ...
+
+    	System.out.println( "Cookies.tearDown(" + sspScript.toString() +", " + sspConnector.toString() +  " ): " + sspScript.getName() );
+    	return true;
+    }
+
 }

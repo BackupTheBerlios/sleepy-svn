@@ -7,21 +7,21 @@
   <property name="project.build" location="bin" />
   <property name="project.path"  value="sleepy" />
 
-  <target name="all" depends="init, generate, compile, jar" />
+  <target name="all" depends="init, compile, jar" />
 
   <target name="init">
     <tstamp />
     <mkdir dir="${project.build}" />
   </target>
 
-  <target name="generate" depends="init" description="generate SSPParser.java">
+  <target name="generate" description="generate SSPParser.java">
     <jflex
         file="res/sspparser.flex"
         destdir="src"
 	/>
   </target>
 
-  <target name="compile" depends="generate" description="compile the source">
+  <target name="compile" depends="init" description="compile the source">
     <javac srcdir="${project.src}/"
            destdir="${project.build}"
            classpath="${project.build};lib/sleep.jar;lib/org.mortbay.jetty.jar;lib/javax.servlet.jar;lib/commons-logging.jar"

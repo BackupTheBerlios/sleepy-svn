@@ -1,6 +1,11 @@
 
 package sleepy.bridges;
 
+import sleepy.ssp.core.SSPLoadable;
+import sleepy.ssp.core.SSPScript;
+import sleepy.ssp.core.SSPConnector;
+import sleepy.ssp.SSPJettyConnector;
+
 import sleep.bridges.*;
 import sleep.interfaces.*;
 import sleep.runtime.*;
@@ -18,18 +23,35 @@ import java.util.*;
  * @author Andreas Ravnestad
  * @since 1.0
  */
-public class Sessions implements Loadable {
+public class Sessions implements SSPLoadable /*, Protectable*/ {
     
-    private HttpRequest request;
-    private HttpResponse response;
+    static HashSet PROTECTED_FUNCTIONS = new HashSet();
+    static {
+    	PROTECTED_FUNCTIONS.add("&startSession");
+    	PROTECTED_FUNCTIONS.add("&stopSession");
+    	PROTECTED_FUNCTIONS.add("&destroySession");
+    	PROTECTED_FUNCTIONS.add("&getSessionID");
+    }
     
-    public Sessions(HttpRequest request, HttpResponse response) {
-
-        this.request = request;
-        this.response = response;
+    /* if implements Protectable
+	public Set protectedFunctionNames()
+	{
+		return PROTECTED_FUNCTIONS;
+	}
+    */
+    
+    public Sessions() {
     }
 
     public boolean scriptLoaded(ScriptInstance s) {
+    	
+        Hashtable env = s.getScriptEnvironment().getEnvironment();
+
+        env.put("&startSession", new startSession() );
+        env.put("&stopSession", new stopSession() );
+        env.put("&destroySession", new destroySession() );
+        env.put("&getSessionID", new getSessionID() );
+
         return true;
     }
     
@@ -40,14 +62,14 @@ public class Sessions implements Loadable {
     // Starts a session
     private static class startSession implements Function {
         public Scalar evaluate(String name, ScriptInstance script, Stack args) {
-            return null;
+            return SleepUtils.getEmptyScalar();
         }
     }
     
     // Stops a session
     private static class stopSession implements Function {
         public Scalar evaluate(String name, ScriptInstance script, Stack args) {
-            return null;
+            return SleepUtils.getEmptyScalar();
         }
     }
     
@@ -55,14 +77,39 @@ public class Sessions implements Loadable {
     // with the given/current session
     private static class destroySession implements Function {
         public Scalar evaluate(String name, ScriptInstance script, Stack args) {
-            return null;
+            return SleepUtils.getEmptyScalar();
         }
     } 
     
     // Returns the current session id
     private static class getSessionID implements Function {
         public Scalar evaluate(String name, ScriptInstance script, Stack args) {
-            return null;
+            return SleepUtils.getEmptyScalar();
         }
     } 
+    
+    // called before the script runs
+    public boolean setup( SSPScript sspScript, SSPConnector sspConnector )
+    {
+    	// SSPJettyConnector jettyConnector = (SSPJettyConnector) sspConnector;
+    	// HttpRequest httpRequest = jettyConnector.getHttpRequest();
+    	// HttpResponse httpResponse = jettyConnector.getHttpResponse();
+    	// ...
+    	
+		System.out.println( "Sessions.setup(" + sspScript.toString() +", " + sspConnector.toString() +  " ): " + sspScript.getName() );
+		return true;
+    }
+
+    // called when the script 
+    public boolean tearDown( SSPScript sspScript, SSPConnector sspConnector )
+    {
+    	// SSPJettyConnector jettyConnector = (SSPJettyConnector) sspConnector;
+    	// HttpRequest httpRequest = jettyConnector.getHttpRequest();
+    	// HttpResponse httpResponse = jettyConnector.getHttpResponse();
+    	// ...
+
+		System.out.println( "Sessions.tearDown(" + sspScript.toString() +", " + sspConnector.toString() +  " ): " + sspScript.getName() );
+		return true;
+	}
+
 }
