@@ -75,16 +75,13 @@ public class Cookies implements SSPLoadable /*, Protectable*/ {
 			
 			if ( !cookieName.equals("") )
 			{
-				Cookie cookie = getCookie( (SSPScript) script, cookieName );
+                Cookie cookie = getCookie( (SSPScript) script, cookieName );
 				if ( cookie != null )
 				{
-					HashBin hash = new HashBin();
-					hash.put("name", SleepWrapper.wrap( cookie.getName() ) );
-					hash.put("value", SleepWrapper.wrap( cookie.getValue() ) );
-					return SleepWrapper.wrap( hash );	
+                    return SleepWrapper.wrap(cookie.getValue());	
 				}
 			}
-			return SleepUtils.getEmptyScalar();
+            return SleepUtils.getEmptyScalar();
 		}
 	}
 	
