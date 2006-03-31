@@ -49,7 +49,7 @@ public class Sessions implements SSPLoadable /*, Protectable*/ {
 	}
 	*/
 	
-	public static final String sessionID = "session-id";	
+    public static final String sessionID = "session-id";
 	private static SessionStorage sessions = new VolatileSessionStorage();
 	
 	public Sessions() {
@@ -169,40 +169,6 @@ public class Sessions implements SSPLoadable /*, Protectable*/ {
 		}
 	} 
 
-//	private static void startSession()
-//	{
-//			Object session = sessions.getSession( hostaddress );
-//			
-//			if ( session == null )
-//			{
-//				String id = ""+System.currentTimeMillis();
-//				Cookies.setCookie( sspScript, sessionID, id, 300, "" );
-//				HashBin sessionHash = new HashBin();
-//				sessionHash.put(Sessions.sessionID , ReadOnlyScalar.wrap(id) );
-//				sessionHash.put("session-data" , ReadOnlyScalar.wrap(new HashBin()) );
-//				sessions.putSession( hostaddress, sessionHash );
-//				script.getScriptVariables().putScalar("%SESSION", ReadOnlyScalar.wrap(sessionHash));
-//			}
-//			else // we have a session
-//			{ 	 // then we must have a cookie or the session is expired
-//				Cookie cookie = Cookies.getCookie( sspScript, sessionID );
-//				if ( cookie != null )
-//				{
-//					HashBin sessionHash = (HashBin) session;
-//					String id = sessionHash.get(Sessions.sessionID).stringValue();
-//					if ( cookie.getValue().equals(id) )
-//					{ // allright, 
-//						
-//					}
-//				}
-//				else
-//				{
-//					HashBin sessionHash = (HashBin) sessions.remove( hostaddress );
-//				}
-//				script.getScriptVariables().putScalar("%SESSION", ReadOnlyScalar.wrap( session ));
-//			}
-//	}
-
 	private static String getSessionIDFromScript( SSPScript sspScript )
 	{
 		Scalar sessionScalar = sspScript.getScriptVariables().getScalar("%SESSION");
@@ -232,46 +198,24 @@ public class Sessions implements SSPLoadable /*, Protectable*/ {
 	{
 		return ((SSPJettyConnector) sspScript.getSSPConnector()).getHttpResponse();
 	}
-    /**
-	private static String getHostAddress( SSPScript sspScript )
-	{
-		return sspScript.getSSPConnector().getRemoteAddress();
-	}
-    **/
+
 	// called before the script runs
 	public boolean setup( SSPScript sspScript, SSPConnector sspConnector )
 	{
-		// SSPJettyConnector jettyConnector = (SSPJettyConnector) sspConnector;
-		// HttpRequest httpRequest = jettyConnector.getHttpRequest();
-		// HttpResponse httpResponse = jettyConnector.getHttpResponse();
-		// ...
-		
-		//String hostaddress = sspConnector.getRemoteAddress();
-
-		
-		//System.out.println( "Sessions.setup(" + sspScript.toString() +", " + sspConnector.toString() +  " ): " + sspScript.getName() );
 		return true;
 	}
 
-	// called when the script 
 	public boolean tearDown( SSPScript sspScript, SSPConnector sspConnector )
 	{
-		// SSPJettyConnector jettyConnector = (SSPJettyConnector) sspConnector;
-		// HttpRequest httpRequest = jettyConnector.getHttpRequest();
-		// HttpResponse httpResponse = jettyConnector.getHttpResponse();
-		// ...
-
-		String hostaddress = sspConnector.getRemoteAddress();
+       
 		Object sessionScalar = sspScript.getScriptVariables().getScalar("%SESSION");
 		if ( sessionScalar != null )
-		{ // preserve session hash
-			if ( Cookies.getCookie( sspScript, Sessions.sessionID ) != null )
-				sessions.putSession( hostaddress, ((Scalar) sessionScalar).objectValue() );
-			// else sessions.removeSession( hostaddress );
-
+		{ 
+            // Preserve session hash
+			if (Cookies.getCookie( sspScript, Sessions.sessionID ) != null )
+                sessions.putSession(getSessionIDFromScript(sspScript), ((Scalar) sessionScalar).objectValue() );
 		}
 
-		//System.out.println( "Sessions.tearDown(" + sspScript.toString() +", " + sspConnector.toString() +  " ): " + sspScript.getName() );
 		return true;
 	}
     
