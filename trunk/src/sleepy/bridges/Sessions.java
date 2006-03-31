@@ -15,6 +15,10 @@ import org.mortbay.http.HttpRequest;
 import org.mortbay.http.HttpResponse;
 import java.util.*;
 
+import java.io.*;
+import java.security.*;
+import sun.misc.*;
+
 import javax.servlet.http.Cookie;
 
 /**
@@ -76,16 +80,36 @@ public class Sessions implements SSPLoadable /*, Protectable*/ {
 				throw new RuntimeException("Sessions.startSession: not a SSPScript: " + script );
 			
 			SSPScript sspScript = (SSPScript) script;
-			String hostaddress = getHostAddress( sspScript );
-			String id = ""+System.currentTimeMillis();
-			Cookies.setCookie( sspScript, Sessions.sessionID, id, 300, "" );
-			HashBin sessionHash = new HashBin();
-			sessionHash.put(Sessions.sessionID , ReadOnlyScalar.wrap(id) );
-			sessionHash.put("session-data" , ReadOnlyScalar.wrap(new HashBin()) );
-			sessions.putSession( hostaddress, sessionHash );
-			script.getScriptVariables().putScalar("%SESSION", ReadOnlyScalar.wrap(sessionHash));
-
-			return SleepUtils.getEmptyScalar();
+            
+            // Try to retrieve an existing session
+            Object session = sessions.getSession(getSessionIDFromCookie(sspScript));
+            if ( session != null && Cookies.getCookie( sspScript, Sessions.sessionID ) != null) {
+                sspScript.getScriptVariables().putScalar("%SESSION", ReadOnlyScalar.wrap( (HashBin) session ));
+                return SleepUtils.getScalar(getSessionIDFromScript(sspScript));
+            }
+            else {
+            
+                // Generate new session id
+                String id = Sessions.generateSessionId();
+                
+                // Set a cookie with the new session id
+                Cookies.setCookie( sspScript, Sessions.sessionID, id, 300, "" );
+                
+                // Create the session data hash
+                HashBin sessionHash = new HashBin();
+                
+                // Add the session id to the hash
+                sessionHash.put(Sessions.sessionID , ReadOnlyScalar.wrap(id) );
+                
+                // Store the hash in the session storage
+                sessions.putSession(id, sessionHash);
+                
+                // Put the hash into the script environment
+                script.getScriptVariables().putScalar("%SESSION", ReadOnlyScalar.wrap(sessionHash));
+    
+                // Return the session id, as a commodity
+                return SleepUtils.getScalar(id);
+            }
 		}
 	}
 	
@@ -97,8 +121,12 @@ public class Sessions implements SSPLoadable /*, Protectable*/ {
 			if ( !(script instanceof SSPScript) )
 				throw new RuntimeException("Sessions.stopSession: not a SSPScript: " + script );
 			
+            // Delete the cookie
 			Cookies.deleteCookie( (SSPScript) script, Sessions.sessionID );
-			
+            
+            // Remove the %SESSION variable from environment
+            script.getScriptVariables().putScalar("%SESSION", SleepUtils.getEmptyScalar());
+
 			return SleepUtils.getEmptyScalar();
 		}
 	}
@@ -112,9 +140,16 @@ public class Sessions implements SSPLoadable /*, Protectable*/ {
 			if ( !(script instanceof SSPScript) )
 				throw new RuntimeException("Sessions.destroySession: not a SSPScript: " + script );
 			
-			sessions.removeSession( getHostAddress( (SSPScript) script ) );
+            // Remove the session data from storage
+            String id = getSessionIDFromScript((SSPScript)script);
+            if (id != null) {
+    			sessions.removeSession(id);
+            }
 		
-			return SleepUtils.getEmptyScalar();
+            // Remove the %SESSION variable from environment
+            script.getScriptVariables().putScalar("%SESSION", SleepUtils.getEmptyScalar());
+
+            return SleepUtils.getEmptyScalar();
 		}
 	} 
 	
@@ -173,7 +208,7 @@ public class Sessions implements SSPLoadable /*, Protectable*/ {
 		Scalar sessionScalar = sspScript.getScriptVariables().getScalar("%SESSION");
 		if ( sessionScalar != null )
 		{
-			return ((HashBin) sessionScalar.getHash()).get(Sessions.sessionID).stringValue();
+			return ((HashBin)sessionScalar.getHash()).get(Sessions.sessionID).stringValue();
 		}
 		return null;
 	}
@@ -197,12 +232,12 @@ public class Sessions implements SSPLoadable /*, Protectable*/ {
 	{
 		return ((SSPJettyConnector) sspScript.getSSPConnector()).getHttpResponse();
 	}
-
+    /**
 	private static String getHostAddress( SSPScript sspScript )
 	{
 		return sspScript.getSSPConnector().getRemoteAddress();
 	}
-	
+    **/
 	// called before the script runs
 	public boolean setup( SSPScript sspScript, SSPConnector sspConnector )
 	{
@@ -211,14 +246,8 @@ public class Sessions implements SSPLoadable /*, Protectable*/ {
 		// HttpResponse httpResponse = jettyConnector.getHttpResponse();
 		// ...
 		
-		String hostaddress = sspConnector.getRemoteAddress();
-		Object session = sessions.getSession( hostaddress );
-		if ( session != null )
-		{ // restore session hash
-			if ( Cookies.getCookie( sspScript, Sessions.sessionID ) != null)
-				sspScript.getScriptVariables().putScalar("%SESSION", ReadOnlyScalar.wrap( (HashBin) session ));
-			// else sessions.removeSession( hostaddress );
-		}
+		//String hostaddress = sspConnector.getRemoteAddress();
+
 		
 		//System.out.println( "Sessions.setup(" + sspScript.toString() +", " + sspConnector.toString() +  " ): " + sspScript.getName() );
 		return true;
@@ -245,5 +274,50 @@ public class Sessions implements SSPLoadable /*, Protectable*/ {
 		//System.out.println( "Sessions.tearDown(" + sspScript.toString() +", " + sspConnector.toString() +  " ): " + sspScript.getName() );
 		return true;
 	}
+    
+    private static String generateSessionId() {
+        
+        MD5Provider md5 = new MD5Provider();
+        return md5.MD5(""+System.currentTimeMillis());
+    }
 
+}
+
+class MD5Provider {
+    
+    // The string to digest
+    String subject;
+    
+    public String MD5(String subject) {
+        
+        this.subject = subject; // The string to be digested
+        
+        MessageDigest md5; // This is our workhorse
+        
+        try {
+            
+            md5  = MessageDigest.getInstance("MD5"); // Get the instance
+        }
+        catch (Exception e) {
+            
+            // Error handling here
+            return null;
+        }
+        
+        StringBuffer buffer = new StringBuffer(); // This is the buffer for the resulting digest
+        
+        byte[] digest = md5.digest(this.subject.getBytes()); // perform the md5 digest
+        
+        String tmp; // Used as a placeholder in the loop
+        
+        // Loop through the bytes in the digest
+        for (int i = 0; i < digest.length; i++) {
+            
+            tmp = "0" + Integer.toHexString( (0xff & digest[i])); // Create a hex string representing the byte
+            buffer.append(tmp.substring(tmp.length()-2)); // Append it to the buffer
+        }       
+        
+        return (buffer.toString()); // Return the result, which should be a 32 byte hex string
+    
+    }
 }
