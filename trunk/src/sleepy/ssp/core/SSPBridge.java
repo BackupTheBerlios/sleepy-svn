@@ -48,9 +48,9 @@ public class SSPBridge implements Loadable, Function
 //		env.put( "&getBytes", byteSource );
 //		env.put( "&loadFile", byteSource );
 //
-//		GetParameters getParameters = new GetParameters();
-//		env.put( "&getParameter", getParameters);
-//		env.put( "&getParameters", getParameters);
+		GetParameters getParameters = new GetParameters();
+		env.put( "&getParameter", getParameters);
+		env.put( "&getParameters", getParameters);
 //		
 //		env.put( "&useGlobal", new UseGlobal(scriptLoader));
 //		env.put( "&useGlobalClass", new UseGlobalClass(scriptLoader));
@@ -199,4 +199,64 @@ public class SSPBridge implements Loadable, Function
 		}
 	}
 
+	private static class GetParameters implements Function
+	{
+		public Scalar evaluate( String name, ScriptInstance script, Stack args )
+		{
+			if ( name.equals("&getParameters") )
+			{
+				try
+				{
+					Scalar query = script.getScriptVariables().getScalar( "%PARAMETERS" );
+					ScalarHash hash = query.getHash();
+					ScalarArray array = hash.getAt( BridgeUtilities.getScalar(args) ).getArray();
+					return SleepUtils.getArrayScalar( array );
+				}
+				catch ( Exception e )
+				{
+					if ( args.size() > 0 )
+					{
+						Scalar def = (Scalar) args.pop();
+						if ( def.getArray() != null )
+						{
+							return def;
+						}
+						else
+						{
+							Scalar s = SleepUtils.getArrayScalar();
+							ScalarArray arr = s.getArray();
+							do {
+								arr.add( def, arr.size() );	
+							} while ( (def = (Scalar) args.pop()) != null );
+						}
+					}
+				}
+			}
+			else if ( name.equals("&getParameter") )
+			{
+				try
+				{
+					Scalar query = script.getScriptVariables().getScalar( "%PARAMETERS" );
+					ScalarHash hash = query.getHash();
+					ScalarArray array = hash.getAt( BridgeUtilities.getScalar(args) ).getArray();
+					//return SleepUtils.getArrayScalar( array );
+					if ( !"".equals(array.getAt(0).stringValue()) )
+					{
+						return array.getAt(0);
+					}
+					else
+					{
+						if ( args.size() > 0 )
+							return (Scalar) args.pop();
+					}
+				}
+				catch ( Exception e )
+				{
+					if ( args.size() > 0 )
+						return (Scalar) args.pop();
+				}
+			}
+			return SleepUtils.getEmptyScalar();
+		}
+	}
 }
