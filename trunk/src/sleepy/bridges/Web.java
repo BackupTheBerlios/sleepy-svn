@@ -30,8 +30,6 @@ public class Web implements Loadable {
         env.put("&removeHtmlTags", new removeHtmlTags());
         env.put("&urlEncode", new urlEncode());
         env.put("&urlDecode", new urlDecode());
-        //env.put("&rawUrlEncode", new rawUrlEncode());
-        //env.put("&rawUrlDecode", new rawUrlDecode());
 
 		return true;
 	}
@@ -109,33 +107,10 @@ public class Web implements Loadable {
             }
         }
     }
-
-    
-    // rawUrlEncode(<string>)
-	// Encodes a string with raw url-encoding
-    private static class rawUrlEncode implements Function
-    {
-        public Scalar evaluate(String name, ScriptInstance script, Stack args)
-        {
-            
-            return SleepUtils.getEmptyScalar();
-        }
-    }
-    
-    // rawUrlDecode(<string>)
-	// Decodes a string with raw url-encoding
-    private static class rawUrlDecode implements Function
-    {
-        public Scalar evaluate(String name, ScriptInstance script, Stack args)
-        {
-            
-            return SleepUtils.getEmptyScalar();
-        }
-    }
-
 }
 
 class HtmlEntityEncoder {
+    
     private static HashMap entityTable;
 
     private final static String[] ENTITYLIST = {
