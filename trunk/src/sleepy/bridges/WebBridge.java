@@ -18,7 +18,7 @@ import java.net.*;
  */
 public class WebBridge implements Loadable {
 		
-	public Web() {
+	public WebBridge() {
 		
 	}
 
